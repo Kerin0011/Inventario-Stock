@@ -5,7 +5,7 @@
       "nombre": "Laptop ASUS",
       "precio": 3200000,
       "stock": 5,
-      "descripcion": "Laptop gamer Ryzen 7 con 16GB RAM"
+      "descripcion": "Laptop gamer Ryzen 7"
     },
     {
       "id": "002",
@@ -16,10 +16,10 @@
     },
     {
       "id": "003",
-      "nombre": "Monitor LG 27\"",
+      "nombre": "Memoria Ram DDR5 \"",
       "precio": 850000,
       "stock": 12,
-      "descripcion": "Monitor 4K IPS 144Hz"
+      "descripcion": "Memoria RAM DDR5 16GB"
     }
   ],
   "$schema": "./node_modules/json-server/schema.json"
