@@ -1,25 +1,25 @@
 {
   "productos": [
     {
-      "id": "1",
+      "id": "001",
       "nombre": "Laptop ASUS",
       "precio": 3200000,
       "stock": 5,
       "descripcion": "Laptop gamer Ryzen 7 con 16GB RAM"
     },
     {
-      "id": "2",
+      "id": "002",
       "nombre": "Monitor LG 27\"",
       "precio": 850000,
       "stock": 12,
       "descripcion": "Monitor 4K IPS 144Hz"
     },
     {
-      "nombre": "Teclado Mecánico",
-      "precio": 320000,
-      "stock": 3,
-      "descripcion": "Teclado RGB switches Cherry MX",
-      "id": "3"
+      "id": "003",
+      "nombre": "Monitor LG 27\"",
+      "precio": 850000,
+      "stock": 12,
+      "descripcion": "Monitor 4K IPS 144Hz"
     }
   ],
   "$schema": "./node_modules/json-server/schema.json"
