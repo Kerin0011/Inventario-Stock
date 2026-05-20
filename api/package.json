@@ -4,20 +4,20 @@
   "description": "Bienvenido al proyecto **StockMaster**, una aplicación premium para la gestión de inventarios. Este proyecto está diseñado para practicar el desarrollo de una interfaz CRUD completa consumiendo una API REST.",
   "main": "index.js",
   "scripts": {
-  "server": "json-server --watch db.json --port 3001"
- },
+    "server": "json-server --watch db.json --port 3001"
+  },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jcomte23/StockMaster.git"
+    "url": "git+https://github.com/Kerin0011/Inventario-Stock.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "bugs": {
-    "url": "https://github.com/jcomte23/StockMaster/issues"
+    "url": "https://github.com/Kerin0011/Inventario-Stock/issues"
   },
-  "homepage": "https://github.com/jcomte23/StockMaster#readme",
+  "homepage": "https://github.com/Kerin0011/Inventario-Stock#readme",
   "dependencies": {
     "json-server": "^1.0.0-beta.15"
   }

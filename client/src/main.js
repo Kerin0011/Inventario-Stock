@@ -10,11 +10,20 @@ const inputNombre = document.getElementById('nombre');
 const inputPrecio = document.getElementById('precio');
 const inputStock = document.getElementById('stock');
 const inputDescripcion = document.getElementById('descripcion');
+const searchInput = document.getElementById('search-input');
+const btnSearch = document.getElementById('btn-search');
 const statTotal = document.getElementById('stat-total');
 const statValue = document.getElementById('stat-value');
 const statLow = document.getElementById('stat-low');
 
+const modalConfirmacion = document.getElementById('modal-confirmacion');
+const btnModalConfirmar = document.getElementById('modal-confirmar');
+const btnModalCancelar = document.getElementById('modal-cancelar');
+
+let productosCache = [];
+
 let editingProductId = null;
+let idProductoAEliminar = null;
 
 async function fetchAPI(url, options = {}) {
   try {
@@ -70,10 +79,50 @@ function calcularEstadisticas(productos) {
   statLow.textContent = stockCritico;
 }
 
+function renderProductos(productos) {
+  inventoryList.innerHTML = '';
+  if (productos.length === 0) {
+    inventoryList.innerHTML = `
+      <tr>
+        <td colspan="4" class="px-8 py-6 text-center text-slate-500 italic">No se encontraron productos que coincidan con la búsqueda.</td>
+      </tr>
+    `;
+    calcularEstadisticas([]);
+    return;
+  }
+
+  productos.forEach(producto => {
+    inventoryList.innerHTML += crearFilaProducto(producto);
+  });
+  calcularEstadisticas(productos);
+}
+
+function aplicarBusqueda() {
+  const termino = searchInput.value.trim().toLowerCase();
+  if (!termino) {
+    renderProductos(productosCache);
+    return;
+  }
+
+  const productosFiltrados = productosCache.filter(producto => {
+    return producto.nombre.toLowerCase().includes(termino)
+      || producto.descripcion.toLowerCase().includes(termino);
+  });
+
+  renderProductos(productosFiltrados);
+}
+
 function crearFilaProducto(producto) {
-  const esStockBajo = producto.stock < 5;
-  const colorStock = esStockBajo ? 'bg-rose-50 text-rose-600 border-rose-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100';
-  
+  let colorStock;
+
+  if (producto.stock <= 5) {
+    colorStock = 'bg-rose-50 text-rose-600 border-rose-100';
+  } else if (producto.stock <= 10) {
+    colorStock = 'bg-yellow-50 text-yellow-600 border-yellow-100';
+  } else {
+    colorStock = 'bg-emerald-50 text-emerald-600 border-emerald-100';
+  }
+
   return `
     <tr class="hover:bg-slate-50/30 transition-colors group">
       <td class="px-8 py-6">
@@ -101,12 +150,8 @@ function crearFilaProducto(producto) {
 async function obtenerProductos() {
   try {
     const productos = await fetchAPI(API_URL);
-    inventoryList.innerHTML = '';
-    productos.forEach(producto => {
-      inventoryList.innerHTML += crearFilaProducto(producto);
-    });
-    calcularEstadisticas(productos);
-    agregarEventosAcciones();
+    productosCache = productos;
+    renderProductos(productosCache);
   } catch (error) {
     console.error('Error al obtener productos:', error);
   }
@@ -114,11 +159,30 @@ async function obtenerProductos() {
 
 async function crearProducto(datos) {
   try {
+    const productosActuales = await fetchAPI(API_URL);
+
+    // Calcular el siguiente ID numérico
+    const ids = productosActuales.map(p => {
+      let id = p.id;
+      if (typeof id === 'string') {
+        id = parseInt(id);
+      }
+      return !isNaN(id) ? id : 0;
+    });
+
+    const maxId = ids.length > 0 ? Math.max(...ids) : 0;
+    const nuevoId = maxId + 1;
+
+    datos.id = nuevoId;
+
+    console.log('Creando producto con ID:', datos.id, 'tipo:', typeof datos.id);
+
     await fetchAPI(API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(datos)
     });
+
     limpiarFormulario();
     await obtenerProductos();
     alert('Producto creado exitosamente');
@@ -143,14 +207,8 @@ async function actualizarProducto(id, datos) {
 }
 
 async function eliminarProducto(id) {
-  if (!confirm('¿Estás seguro de que deseas eliminar este producto?')) return;
-  try {
-    await fetchAPI(`${API_URL}/${id}`, { method: 'DELETE' });
-    await obtenerProductos();
-    alert('Producto eliminado exitosamente');
-  } catch (error) {
-    console.error('Error al eliminar producto:', error);
-  }
+  idProductoAEliminar = id;
+  modalConfirmacion.classList.remove('hidden');
 }
 
 async function cargarProductoParaEditar(id) {
@@ -177,14 +235,66 @@ productForm.addEventListener('submit', async (e) => {
 });
 
 btnCancel.addEventListener('click', limpiarFormulario);
+btnSearch.addEventListener('click', (e) => {
+  e.preventDefault();
+  aplicarBusqueda();
+});
 
-function agregarEventosAcciones() {
-  document.querySelectorAll('.btn-editar').forEach(btn => {
-    btn.addEventListener('click', () => cargarProductoParaEditar(btn.dataset.id));
-  });
-  document.querySelectorAll('.btn-eliminar').forEach(btn => {
-    btn.addEventListener('click', () => eliminarProducto(btn.dataset.id));
-  });
-}
+searchInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    aplicarBusqueda();
+  }
+});
+
+searchInput.addEventListener('input', () => {
+  if (!searchInput.value.trim()) {
+    renderProductos(productosCache);
+  }
+});
+
+document.addEventListener('click', (e) => {
+  const btnEditar = e.target.closest('.btn-editar');
+  const btnEliminar = e.target.closest('.btn-eliminar');
+
+  if (btnEditar) {
+    e.preventDefault();
+    cargarProductoParaEditar(btnEditar.dataset.id);
+  }
+
+  if (btnEliminar) {
+    e.preventDefault();
+    eliminarProducto(btnEliminar.dataset.id);
+  }
+});
+
+
+btnModalConfirmar.addEventListener('click', async () => {
+  if (idProductoAEliminar) {
+    try {
+      const url = `${API_URL}/${idProductoAEliminar}`;
+      const response = await fetch(url, { method: 'DELETE' });
+
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+
+      modalConfirmacion.classList.add('hidden');
+      idProductoAEliminar = null;
+      await obtenerProductos();
+      alert('Producto eliminado exitosamente');
+    } catch (error) {
+      console.error('Error al eliminar producto:', error);
+      alert('Error al eliminar: ' + error.message);
+      modalConfirmacion.classList.add('hidden');
+    }
+  }
+});
+
+btnModalCancelar.addEventListener('click', () => {
+  modalConfirmacion.classList.add('hidden');
+  idProductoAEliminar = null;
+});
 
 obtenerProductos();
+

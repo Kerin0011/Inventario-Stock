@@ -1,23 +1,16 @@
 {
   "productos": [
     {
-      "id": "001",
+      "id": "1",
       "nombre": "Laptop ASUS",
       "precio": 3200000,
-      "stock": 5,
+      "stock": 6,
       "descripcion": "Laptop gamer Ryzen 7"
     },
     {
-      "id": "002",
-      "nombre": "Monitor LG 27\"",
-      "precio": 850000,
-      "stock": 12,
-      "descripcion": "Monitor 4K IPS 144Hz"
-    },
-    {
-      "id": "003",
-      "nombre": "Memoria Ram DDR5 \"",
-      "precio": 850000,
+      "id": "2",
+      "nombre": "Memoria Ram DDR5",
+      "precio": 1250000,
       "stock": 12,
       "descripcion": "Memoria RAM DDR5 16GB"
     }
