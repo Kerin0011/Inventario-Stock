@@ -5,6 +5,10 @@ body {
     background-color: #f8fafc;
 }
 
+button:not(:disabled) {
+    cursor: pointer;
+}
+
 .custom-scrollbar::-webkit-scrollbar {
     width: 6px;
 }

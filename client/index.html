@@ -158,13 +158,16 @@
 
                 <!-- Pagination Footer -->
                 <div class="px-8 py-6 border-t border-slate-50 flex items-center justify-between bg-slate-50/20">
-                  <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Mostrando 1 a 3 de
-                    12 productos</span>
+                  <span id="pagination-label" class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Mostrando 1 a 3 de 12 productos</span>
                   <div class="flex gap-4">
-                    <button
-                      class="px-4 py-2 border border-slate-100 rounded-xl text-[10px] font-black text-slate-300 uppercase tracking-widest cursor-not-allowed">Anterior</button>
-                    <button
-                      class="px-4 py-2 border border-slate-200 bg-white rounded-xl text-[10px] font-black text-indigo-600 uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm">Siguiente</button>
+                    <button id="btn-prev" type="button"
+                      class="px-4 py-2 border border-slate-100 rounded-xl text-[10px] font-black text-slate-600 uppercase tracking-widest transition-all disabled:cursor-not-allowed disabled:text-slate-300 disabled:border-slate-100 disabled:bg-slate-50">
+                      Anterior
+                    </button>
+                    <button id="btn-next" type="button"
+                      class="px-4 py-2 border border-slate-200 bg-white rounded-xl text-[10px] font-black text-indigo-600 uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm disabled:cursor-not-allowed disabled:text-slate-300 disabled:border-slate-200 disabled:bg-slate-50">
+                      Siguiente
+                    </button>
                   </div>
                 </div>
               </div>

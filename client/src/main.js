@@ -12,6 +12,9 @@ const inputStock = document.getElementById('stock');
 const inputDescripcion = document.getElementById('descripcion');
 const searchInput = document.getElementById('search-input');
 const btnSearch = document.getElementById('btn-search');
+const paginationLabel = document.getElementById('pagination-label');
+const btnPrev = document.getElementById('btn-prev');
+const btnNext = document.getElementById('btn-next');
 const statTotal = document.getElementById('stat-total');
 const statValue = document.getElementById('stat-value');
 const statLow = document.getElementById('stat-low');
@@ -21,6 +24,9 @@ const btnModalConfirmar = document.getElementById('modal-confirmar');
 const btnModalCancelar = document.getElementById('modal-cancelar');
 
 let productosCache = [];
+let filteredProducts = [];
+let currentPage = 1;
+const PAGE_SIZE = 3;
 
 let editingProductId = null;
 let idProductoAEliminar = null;
@@ -65,51 +71,74 @@ function formatearPesos(monto) {
   return new Intl.NumberFormat('es-CO', {
     style: 'currency',
     currency: 'COP',
+    currencyDisplay: 'code',
     minimumFractionDigits: 0,
-  }).format(monto).replace(/[$\s]/g, '') + ' COP';
+  }).format(monto);
 }
 
 function calcularEstadisticas(productos) {
   const totalSKU = productos.length;
-  const valorTotal = productos.reduce((sum, p) => sum + (p.precio * p.stock), 0);
-  const stockCritico = productos.filter(p => p.stock < 5).length;
+  const valorTotal = productos.reduce((sum, p) => {
+    const precio = Number(p.precio) || 0;
+    const stock = Number(p.stock) || 0;
+    return sum + (precio * stock);
+  }, 0);
+  const stockCritico = productos.filter(p => Number(p.stock) <= 5).length;
 
   statTotal.textContent = totalSKU;
   statValue.textContent = formatearPesos(valorTotal);
   statLow.textContent = stockCritico;
 }
 
+function actualizarPaginacion(totalProductos, inicio, fin, totalPaginas) {
+  const mostrarInicio = totalProductos === 0 ? 0 : inicio;
+  paginationLabel.textContent = `Mostrando ${mostrarInicio} a ${fin} de ${totalProductos} productos`;
+  btnPrev.disabled = currentPage <= 1;
+  btnNext.disabled = currentPage >= totalPaginas;
+  btnPrev.classList.toggle('cursor-not-allowed', btnPrev.disabled);
+  btnNext.classList.toggle('cursor-not-allowed', btnNext.disabled);
+}
+
 function renderProductos(productos) {
+  const totalProductos = productos.length;
+  const totalPaginas = Math.max(1, Math.ceil(totalProductos / PAGE_SIZE));
+  if (currentPage > totalPaginas) currentPage = totalPaginas;
+
+  const inicioIndice = (currentPage - 1) * PAGE_SIZE;
+  const finIndice = Math.min(inicioIndice + PAGE_SIZE, totalProductos);
+  const productosPagina = productos.slice(inicioIndice, finIndice);
+
   inventoryList.innerHTML = '';
-  if (productos.length === 0) {
+  if (productosPagina.length === 0) {
     inventoryList.innerHTML = `
       <tr>
         <td colspan="4" class="px-8 py-6 text-center text-slate-500 italic">No se encontraron productos que coincidan con la búsqueda.</td>
       </tr>
     `;
-    calcularEstadisticas([]);
-    return;
+  } else {
+    productosPagina.forEach(producto => {
+      inventoryList.innerHTML += crearFilaProducto(producto);
+    });
   }
 
-  productos.forEach(producto => {
-    inventoryList.innerHTML += crearFilaProducto(producto);
-  });
   calcularEstadisticas(productos);
+  actualizarPaginacion(totalProductos, inicioIndice + 1, finIndice, totalPaginas);
 }
 
 function aplicarBusqueda() {
   const termino = searchInput.value.trim().toLowerCase();
-  if (!termino) {
-    renderProductos(productosCache);
-    return;
-  }
+  currentPage = 1;
 
-  const productosFiltrados = productosCache.filter(producto => {
+  filteredProducts = productosCache.filter(producto => {
     return producto.nombre.toLowerCase().includes(termino)
       || producto.descripcion.toLowerCase().includes(termino);
   });
 
-  renderProductos(productosFiltrados);
+  if (!termino) {
+    filteredProducts = [...productosCache];
+  }
+
+  renderProductos(filteredProducts);
 }
 
 function crearFilaProducto(producto) {
@@ -140,8 +169,20 @@ function crearFilaProducto(producto) {
         ${formatearPesos(producto.precio)}
       </td>
       <td class="px-8 py-6 text-right">
-        <button class="btn-editar" data-id="${producto.id}" style="cursor: pointer; background: none; border: none; font-size: 18px;">✏️</button>
-        <button class="btn-eliminar" data-id="${producto.id}" style="cursor: pointer; background: none; border: none; font-size: 18px;">🗑️</button>
+        <div class="inline-flex items-center justify-end gap-2">
+          <button type="button" class="w-10 h-10 flex items-center justify-center text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all border border-transparent hover:border-indigo-100 btn-editar" data-id="${producto.id}" title="Editar">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+          </button>
+          <button type="button" class="w-10 h-10 flex items-center justify-center text-rose-600 hover:bg-rose-50 rounded-xl transition-all border border-transparent hover:border-rose-100 btn-eliminar" data-id="${producto.id}" title="Eliminar">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </button>
+        </div>
       </td>
     </tr>
   `;
@@ -151,7 +192,9 @@ async function obtenerProductos() {
   try {
     const productos = await fetchAPI(API_URL);
     productosCache = productos;
-    renderProductos(productosCache);
+    filteredProducts = [...productosCache];
+    currentPage = 1;
+    renderProductos(filteredProducts);
   } catch (error) {
     console.error('Error al obtener productos:', error);
   }
@@ -249,7 +292,24 @@ searchInput.addEventListener('keydown', (e) => {
 
 searchInput.addEventListener('input', () => {
   if (!searchInput.value.trim()) {
-    renderProductos(productosCache);
+    aplicarBusqueda();
+  }
+});
+
+btnPrev.addEventListener('click', (e) => {
+  e.preventDefault();
+  if (currentPage > 1) {
+    currentPage -= 1;
+    renderProductos(filteredProducts);
+  }
+});
+
+btnNext.addEventListener('click', (e) => {
+  e.preventDefault();
+  const totalPaginas = Math.ceil(filteredProducts.length / PAGE_SIZE);
+  if (currentPage < totalPaginas) {
+    currentPage += 1;
+    renderProductos(filteredProducts);
   }
 });
 
